@@ -1,6 +1,6 @@
 # filesystem
 
-基于 golang + gin 的文件系统
+基于 golang + gin 的简单文件系统
 
 ## Intro
 
@@ -11,7 +11,25 @@ filesystem 是一套基于规则的文件系统存储系统，根据特定 path 
 
 把文件系统从整个项目中进行抽离，优化项目结构
 
-## Usage
+## Deploy
+
+- 源码部署
+
+克隆项目
+
+```bash
+git clone https://github.com/i-curve/filesystem.git
+```
+
+进入项目并启动
+
+```bash
+cd filesystem && go run main.go
+```
+
+- 下载可执行文件
+
+[下载位置](https://github.com/i-curve/filesystem/releases)
 
 - 使用 docker
 
@@ -34,5 +52,55 @@ docker run -d --rm \
     wjuncurve/filesystem
 ```
 
--v 把路径挂在到前端展示的页面上
--p 映射想要的端口
+-v 把路径挂在到前端展示的页面上  
+-p 映射想要的端口  
+BASE_URL: 网络文件 url  
+USER: 用户  
+AUTH: 用户的认证
+
+如果未指定 USER 和 AUTH 的话, 为生成一个临时的
+
+- 检测是否部署成功
+
+```bash
+# 查看版本信息
+curl "http://localhost:8080/version"
+```
+
+## Usage
+
+文件上传
+
+```bash
+curl 'http://localhost:8080/upload' -X POST \
+--form 'file=@"C:\\Users\\curve\\Pictures\\images.jpg"'
+
+```
+
+文件获取
+
+```bash
+curl "http://localhost:8080/file?short_url=${url}"
+```
+
+文件复制
+
+```bash
+curl "http://localhost:8080/copy" -X POST \
+    -d "short_url=${old_url}&new_url=${new_url}"
+```
+
+文件转移
+
+```bash
+curl "http://localhost:8080/move" -X POST \
+    -d "short_url=${old_url}&new_url=${new_url}"
+```
+
+文件删除
+
+```bash
+curl "http://localhost:8080/file?short_url=${short_url}" -X DELETE
+```
+
+[详情请参考文档](https://www.apifox.cn/apidoc/shared-e29b73da-4337-4787-8a0f-e31312d8f99e/api-40901537)
