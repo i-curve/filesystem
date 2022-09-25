@@ -11,6 +11,7 @@ func Middleware(c *gin.Context) {
 	var user config.User
 	if err := c.ShouldBind(&user); err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 401, "err": "用户未授权", "msg": "用户未授权"})
+		c.Abort()
 		return
 	}
 
