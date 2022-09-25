@@ -104,3 +104,10 @@ curl "http://localhost:8080/file?short_url=${short_url}" -X DELETE
 ```
 
 [详情请参考文档](https://www.apifox.cn/apidoc/shared-e29b73da-4337-4787-8a0f-e31312d8f99e/api-40901537)
+
+## 测试环境
+
+地址: [https://filesystem.ml/test](https://filesystem.ml/test)
+
+user: i-curve
+auth: 12345678
