@@ -1,8 +1,6 @@
 package util
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"errors"
 	"filesystem/config"
 	"filesystem/model"
@@ -15,20 +13,13 @@ import (
 	"github.com/i-curve/coding"
 )
 
-func PathToUrl(short_url string) string {
-	filename := path.Base(short_url)
-	hash := md5.New()
-	hash.Write([]byte(filename))
-	return hex.EncodeToString(hash.Sum(nil)) + path.Ext(short_url)
-}
-
 // 文件上传
 func WriteFile(base string, file *multipart.FileHeader) (*model.Reply, coding.Code) {
 	if file == nil {
 		return nil, coding.New(coding.StatusOK, 400, "上传文件不能为空")
 	}
 	base = TernaryExpr(base != "", base, file.Filename)
-	filename := PathToUrl(base)
+	filename := base
 	f, _ := file.Open()
 	bys, _ := io.ReadAll(f)
 	err := os.WriteFile("/data/"+filename, bys, 0666)
@@ -37,8 +28,8 @@ func WriteFile(base string, file *multipart.FileHeader) (*model.Reply, coding.Co
 
 // 复制文件
 func CopyFile(oldPath, newPath string) coding.Code {
-	oldFilename := "/data/" + PathToUrl(oldPath)
-	newFilename := "/data/" + PathToUrl(newPath)
+	oldFilename := "/data/" + oldPath
+	newFilename := "/data/" + newPath
 	bys, err := os.ReadFile(oldFilename)
 	if err != nil {
 		coding.New(http.StatusOK, 400, "原始文件不存在")
@@ -58,7 +49,7 @@ func MoveFile(oldPath, newPath string) coding.Code {
 
 // 文件删除
 func DeleteFile(base string) coding.Code {
-	filename := "/data/" + PathToUrl(base)
+	filename := "/data/" + base
 	if _, err := os.Stat(filename); err != nil {
 		return coding.New(coding.StatusOK, 400, "文件不存在")
 	}

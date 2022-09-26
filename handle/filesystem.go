@@ -28,7 +28,7 @@ func GetFile(ctx *gin.Context) {
 	var base string
 	if request.ShortURL != "" {
 		base = request.ShortURL
-		ctx.JSON(http.StatusOK, gin.H{"code": 200, "url": path.Join(config.BaseURL, util.PathToUrl(base))})
+		ctx.JSON(http.StatusOK, gin.H{"code": 200, "url": path.Join(config.BaseURL, base)})
 	} else {
 		ctx.JSON(http.StatusOK, gin.H{"code": 400, "err": "路径不能为空", "msg": "路径不能为空"})
 	}
