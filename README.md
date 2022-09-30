@@ -107,7 +107,8 @@ curl "http://localhost:8080/file?short_url=${short_url}" -X DELETE
 
 ## 测试环境
 
-地址: [https://filesystem.ml/test](https://filesystem.ml/test)
+地址: [https://test.filesystem.ml](https://test.filesystem.ml)  
+[https://filesystem.ml](https://filesystem.ml/test)
 
 user: i-curve
 auth: 12345678
