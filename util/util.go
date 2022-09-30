@@ -8,7 +8,6 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
-	"path"
 
 	"github.com/i-curve/coding"
 )
@@ -18,12 +17,12 @@ func WriteFile(base string, file *multipart.FileHeader) (*model.Reply, coding.Co
 	if file == nil {
 		return nil, coding.New(coding.StatusOK, 400, "上传文件不能为空")
 	}
-	base = TernaryExpr(base != "", base, file.Filename)
+	base = "/" + TernaryExpr(base != "", base, file.Filename)
 	filename := base
 	f, _ := file.Open()
 	bys, _ := io.ReadAll(f)
-	err := os.WriteFile("/data/"+filename, bys, 0666)
-	return &model.Reply{URL: path.Join(config.BaseURL, filename), ShortURL: base}, coding.New(coding.StatusOK, 500, err)
+	err := os.WriteFile("/data"+filename, bys, 0666)
+	return &model.Reply{URL: config.BaseURL + filename, ShortURL: base}, coding.New(coding.StatusOK, 500, err)
 }
 
 // 复制文件
