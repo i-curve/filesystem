@@ -9,7 +9,7 @@ import (
 )
 
 // 版本信息
-var version = "1.1.1"
+var version = "1.2.0"
 
 func init() {
 	config.Init()
