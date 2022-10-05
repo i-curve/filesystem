@@ -19,6 +19,7 @@ func WriteFile(base string, file *multipart.FileHeader) (*model.Reply, coding.Co
 	}
 	base = "/" + TernaryExpr(base != "", base, file.Filename)
 	filename := base
+	MakDir(filename)
 	f, _ := file.Open()
 	bys, _ := io.ReadAll(f)
 	err := os.WriteFile("/data"+filename, bys, 0666)
@@ -50,7 +51,10 @@ func MoveFile(oldPath, newPath string) coding.Code {
 func DeleteFile(base string) coding.Code {
 	filename := "/data/" + base
 	if _, err := os.Stat(filename); err != nil {
-		return coding.New(coding.StatusOK, 400, "文件不存在")
+		return coding.New(coding.StatusOK, 400, "文件不存在:"+err.Error())
 	}
-	return coding.New(http.StatusOK, 400, os.Remove(filename))
+	if err := os.Remove(filename); err != nil {
+		coding.New(http.StatusOK, 400, "删除失败:"+err.Error())
+	}
+	return coding.New(http.StatusOK, 400, DelDir(filename))
 }
