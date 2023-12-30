@@ -24,6 +24,16 @@ const (
 	BTypeReadWrite
 )
 
+func authBucketNo(ctx *gin.Context, bucketName string) bool {
+	_, auth := getAuth(ctx)
+	bucket := buckets[bucketName]
+	return auth.UType == UTypeUser && bucket.UId != auth.Id
+}
+
+func authBucket(ctx *gin.Context, bucketName string) bool {
+	return !authBucketNo(ctx, bucketName)
+}
+
 func BucketRoute(r *gin.Engine) {
 	bucketRoute := r.Group("/bucket", authJwt)
 	{
@@ -43,12 +53,14 @@ func createBucket(ctx *gin.Context) {
 		return
 	}
 	uid, _ := getAuth(ctx)
-	mariadb.Create(&Bucket{
+	var bucket = Bucket{
 		Name:  req.Name,
 		UId:   uid,
 		BType: req.BType,
-	})
-	os.MkdirAll(path.Join(BASE_DIR, req.Name), os.ModePerm)
+	}
+	mariadb.Create(&bucket)
+	buckets[req.Name] = &bucket
+	mkdir(path.Join(BASE_DIR, req.Name))
 	ctx.Status(http.StatusCreated)
 }
 
@@ -70,15 +82,13 @@ func deleteBucket(ctx *gin.Context) {
 		return
 	}
 	mariadb.Delete(&bucket)
+	delete(buckets, req.Name)
 	os.RemoveAll(path.Join(BASE_DIR, req.Name))
 	ctx.Status(http.StatusNoContent)
 }
 
 func checkExistBucket(name string) bool {
-	if name == "" {
-		return false
-	}
-	return mariadb.Where(Bucket{
+	return name != "" && mariadb.Where(&Bucket{
 		Name: name,
 	}).First(&Bucket{}).Error == nil
 }

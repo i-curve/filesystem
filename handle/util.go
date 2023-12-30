@@ -1,46 +1,48 @@
 package handle
 
 import (
+	"io"
 	"os"
 	"path"
-
-	"github.com/i-curve/copier"
 )
 
-func copy[T any](sour any) *T {
-	dest := new(T)
-	copier.Copy(&dest, sour)
-	return dest
+func checkExistFile(bucket string, filename string) bool {
+	_, err := os.Stat(path.Join(BASE_DIR, bucket, filename))
+	return err == nil
 }
 
-// 创建嵌套目录
-func mkDir(filename string) error {
-	dirname := path.Dir("/data" + filename)
-	return os.MkdirAll(dirname, 0666)
+func mkdir(dirkey string) {
+	os.MkdirAll(dirkey, os.ModePerm)
 }
 
-// 递归删除空目录
-func delDir(filename string) error {
-	dirname := path.Dir(filename)
-	if len(dirname) <= 5 {
-		return nil
-	}
-
-	dirs, err := os.ReadDir(dirname)
-	if err != nil || len(dirs) != 0 {
-		return err
-	} else if err = os.Remove(dirname); err != nil {
-		return err
-	} else {
-		return delDir(dirname)
+func removedir(dirkey string) {
+	dirs, err := os.ReadDir(dirkey)
+	if err == nil && len(dirs) == 0 {
+		os.Remove(dirkey)
+		removedir(path.Dir(dirkey))
 	}
 }
 
-// // 移动文件
-// func moveFile(oldPath, newPath string) coding.Code {
-// 	err := CopyFile(oldPath, newPath)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return DeleteFile(oldPath)
-// }
+func removeFile(bucket string, filename string) {
+	key := path.Join(BASE_DIR, bucket, filename)
+	os.Remove(key)
+	removedir(path.Dir(key))
+}
+
+func writeFile(bucket string, filename string, r io.Reader) {
+	key := path.Join(BASE_DIR, bucket, filename)
+	mkdir(path.Dir(key))
+	f, _ := os.Create(key)
+	io.Copy(f, r)
+}
+
+func copyFile(sbucket, sfilename, dbucket, dfilename string) {
+	r, _ := os.Open(path.Join(BASE_DIR, sbucket, sfilename))
+	writeFile(dbucket, dfilename, r)
+
+}
+
+func moveFile(sbucket, sfilename, dbucket, dfilename string) {
+	copyFile(sbucket, sfilename, dbucket, dfilename)
+	removeFile(sbucket, sfilename)
+}

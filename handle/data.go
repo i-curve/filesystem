@@ -26,8 +26,7 @@ var BASE_DIR = "/var/www/filesystem"
 var lan = make(map[int]interface{})
 
 var users = make(map[int64]*User, 0)
-
-// var buckets = make(map[int64]*Bucket, 0)
+var buckets = make(map[string]*Bucket, 0)
 
 var mariadb *gorm.DB
 
@@ -76,34 +75,38 @@ func initDB() {
 	mariadb.AutoMigrate(&User{}, &Bucket{})
 }
 
-func writeMem[T User | Bucket]() {
+func writeMem[T User | Bucket]() (user *User) {
 	res := make([]T, 0)
 	mariadb.Find(&res)
 	for _, valRow := range res {
 		switch val := any(valRow).(type) {
 		case User:
 			users[val.Id] = &val
-			// case Bucket:
-			// 	buckets[val.Id] = &val
+			if val.UType == UTypeSystem && user == nil {
+				user = &val
+			}
+		case Bucket:
+			buckets[val.Name] = &val
 		}
 	}
+	return
 }
+
 func initData() {
-	writeMem[User]()
-	if len(users) == 0 {
+	if !checkExistUser("system") {
 		auth := transform(randStringRunes(10))
-		if err := mariadb.Create(&User{
+		mariadb.Create(&User{
 			Name:  "system",
 			Auth:  auth,
 			UType: UTypeSystem,
-		}).Error; err != nil {
-			panic("create system user error" + err.Error())
-		}
-		// todo 输出system用户已经创建
+		})
+	}
+	systemuser := writeMem[User]()
+	writeMem[Bucket]()
+	if systemuser != nil {
 		fmt.Printf("\tsystem user\n")
-		fmt.Printf("\tuser: %s\n", "system")
-		fmt.Printf("\tauth: %s\n", auth)
-		writeMem[User]()
+		fmt.Printf("\tuser: %s\n", systemuser.Name)
+		fmt.Printf("\tauth: %s\n", systemuser.Auth)
 	}
 }
 

@@ -35,6 +35,8 @@ func authJwt(ctx *gin.Context) {
 	ctx.AbortWithStatus(401)
 }
 
+func authUser(ctx *gin.Context) {}
+
 func UserRoute(r *gin.Engine) {
 	userRoute := r.Group("/user", authJwt)
 	{

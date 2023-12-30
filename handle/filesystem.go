@@ -1,90 +1,141 @@
 package handle
 
 import (
-	"filesystem/config"
+	"filesystem/l18n"
 	"mime/multipart"
 	"net/http"
-	"path"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 )
 
-type Request struct {
-	URL      string                `json:"url" form:"url"`
-	ShortURL string                `json:"short_url" form:"short_url"`
-	NewURL   string                `json:"new_url" form:"new_url"`
-	Path     string                `json:"path" form:"path"`
-	File     *multipart.FileHeader `json:"file" form:"file"`
+type fileUpload struct {
+	Bucket string                `json:"bucket" form:"bucket" binding:"request"`
+	PATH   string                `json:"path" form:"path" binding:"request"`
+	File   *multipart.FileHeader `json:"file" form:"file" binding:"request"`
 }
-type Reply struct {
-	URL      string `json:"url"`
-	ShortURL string `json:"short_url"`
+
+type fileDelete struct {
+	Bucket string `json:"bucket" form:"bucket" binding:"request"`
+	PATH   string `json:"path" form:"path" binding:"request"`
+}
+
+type fileDownload struct {
+	Bucket string `json:"bucket" form:"bucket" binding:"request"`
+	PATH   string `json:"path" form:"path" binding:"request"`
+}
+
+type fileCopy struct {
+	SBucket string `json:"s_bucket" form:"s_bucket" binding:"request"`
+	SPath   string `json:"s_path" form:"s_path" binding:"request"`
+	DBucket string
+	DPath   string `json:"d_path" form:"d_path" binding:"request"`
 }
 
 func FileRoute(r *gin.Engine) {
-	fileRoute := r.Group("", Middleware)
+	fileRoute := r.Group("file", authJwt)
 	{
-		fileRoute.POST("/upload", UploadFile) // 文件上传
-		fileRoute.GET("/file", GetFile)       // 获取文件
-		// fileRoute.POST("/copy", CopyFile)     // 文件复制
-		// fileRoute.POST("/move", MoveFile) // 文件转移
-		// fileRoute.DELETE("/file", DeleteFile) // 文件删除
+		contact := Filesystem{}
+		fileRoute.POST("/create", contact.create)    // 文件上传
+		fileRoute.GET("/download", contact.download) // 文件下载
+		fileRoute.POST("/copy", contact.copy)        // 文件复制
+		fileRoute.POST("/move", contact.move)        // 文件转移
+		fileRoute.DELETE("/delete", contact.delete)  // 文件删除
 	}
 }
 
+type Filesystem struct{}
+
 // 文件上传
-func UploadFile(ctx *gin.Context) {
-	var request Request
-	ctx.ShouldBind(&request)
-	// if data, err := util.WriteFile(request.Path, request.File); err != nil {
-	// 	ctx.JSON(http.StatusOK, gin.H{"code": err.HTTPCode(), "err": err.Error(), "msg": err.Message()})
-	// } else {
-	// 	ctx.JSON(http.StatusOK, gin.H{"code": 201, "url": data.URL, "short_url": data.ShortURL})
-	// }
+func (f Filesystem) create(ctx *gin.Context) {
+	var req fileUpload
+	if errs, ok := ctx.ShouldBind(&req).(validator.ValidationErrors); ok {
+		ctx.JSON(http.StatusBadRequest, errs.Translate(trans))
+		return
+	}
+	if !checkExistBucket(req.Bucket) {
+		ctx.JSON(http.StatusForbidden, lan[l18n.BUCKET_NotFound])
+		return
+	}
+
+	if authBucketNo(ctx, req.Bucket) {
+		ctx.JSON(http.StatusForbidden, lan[l18n.ForbiddenOperate])
+		return
+	}
+	r, _ := req.File.Open()
+	writeFile(req.Bucket, req.PATH, r)
 }
 
 // 文件获取
-func GetFile(ctx *gin.Context) {
-	var request Request
-	ctx.ShouldBind(&request)
-	var base string
-	if request.ShortURL != "" {
-		base = request.ShortURL
-		ctx.JSON(http.StatusOK, gin.H{"code": 200, "url": path.Join(config.BaseURL, base)})
-	} else {
-		ctx.JSON(http.StatusOK, gin.H{"code": 400, "err": "路径不能为空", "msg": "路径不能为空"})
+func (f Filesystem) download(ctx *gin.Context) {
+	var req fileDownload
+	if errs, ok := ctx.ShouldBind(&req).(validator.ValidationErrors); ok {
+		ctx.JSON(http.StatusBadRequest, errs.Translate(trans))
+		return
 	}
+	if !checkExistBucket(req.Bucket) {
+		ctx.JSON(http.StatusForbidden, lan[l18n.BUCKET_NotFound])
+		return
+	}
+	if authBucketNo(ctx, req.Bucket) {
+		ctx.JSON(http.StatusForbidden, lan[l18n.ForbiddenOperate])
+		return
+	}
+	// ctx.Writer
 }
 
-// // 文件转移
-// func MoveFile(ctx *gin.Context) {
-// 	var request Request
-// 	ctx.ShouldBind(&request)
-// 	if err := moveFile(request.ShortURL, request.NewURL); err != nil {
-// 		ctx.JSON(err.HTTPCode(), gin.H{"code": err.Code(), "err": err.Error(), "msg": err.Message()})
-// 	} else {
-// 		ctx.JSON(http.StatusOK, gin.H{"code": 201})
-// 	}
-// }
+// 文件转移
+func (f Filesystem) move(ctx *gin.Context) {
+	var req fileCopy
+	if errs, ok := ctx.ShouldBind(&req).(validator.ValidationErrors); ok {
+		ctx.JSON(http.StatusBadRequest, errs.Translate(trans))
+		return
+	}
+	if !checkExistFile(req.SBucket, req.SPath) {
+		ctx.JSON(http.StatusBadRequest, lan[l18n.File_NotFound])
+		return
+	}
+	if authBucketNo(ctx, req.SBucket) || authBucketNo(ctx, req.DBucket) {
+		ctx.JSON(http.StatusForbidden, lan[l18n.ForbiddenOperate])
+		return
+	}
+	moveFile(req.SBucket, req.SPath, req.DBucket, req.DPath)
+	ctx.Status(http.StatusOK)
+}
 
-// // 文件复制
-// func CopyFile(ctx *gin.Context) {
-// 	var request Request
-// 	ctx.ShouldBind(&request)
-// 	if err := util.CopyFile(request.ShortURL, request.NewURL); err != nil {
-// 		ctx.JSON(err.HTTPCode(), gin.H{"code": err.Code(), "err": err.Error(), "msg": err.Message()})
-// 	} else {
-// 		ctx.JSON(http.StatusOK, gin.H{"code": 201})
-// 	}
-// }
+// 文件复制
+func (f Filesystem) copy(ctx *gin.Context) {
+	var req fileCopy
+	if errs, ok := ctx.ShouldBind(&req).(validator.ValidationErrors); ok {
+		ctx.JSON(http.StatusBadRequest, errs.Translate(trans))
+		return
+	}
+	if !checkExistFile(req.SBucket, req.SPath) {
+		ctx.JSON(http.StatusBadRequest, lan[l18n.File_NotFound])
+		return
+	}
+	if authBucketNo(ctx, req.SBucket) || authBucketNo(ctx, req.DBucket) {
+		ctx.JSON(http.StatusForbidden, lan[l18n.ForbiddenOperate])
+		return
+	}
+	copyFile(req.SBucket, req.SPath, req.DBucket, req.DPath)
+	ctx.Status(http.StatusOK)
+}
 
-// // 文件删除
-// func DeleteFile(ctx *gin.Context) {
-// 	var request Request
-// 	ctx.ShouldBind(&request)
-// 	if err := util.DeleteFile(request.ShortURL); err != nil {
-// 		ctx.JSON(http.StatusOK, gin.H{"code": err.HTTPCode(), "err": err.Error(), "msg": err.Message()})
-// 	} else {
-// 		ctx.JSON(http.StatusOK, gin.H{"code": 204})
-// 	}
-// }
+// 文件删除
+func (f Filesystem) delete(ctx *gin.Context) {
+	var req fileDelete
+	if errs, ok := ctx.ShouldBind(&req).(validator.ValidationErrors); ok {
+		ctx.JSON(http.StatusBadRequest, errs.Translate(trans))
+	}
+	if !checkExistBucket(req.Bucket) {
+		ctx.JSON(http.StatusForbidden, lan[l18n.BUCKET_NotFound])
+		return
+	}
+	if authBucketNo(ctx, req.Bucket) {
+		ctx.JSON(http.StatusForbidden, lan[l18n.ForbiddenOperate])
+		return
+	}
+	removeFile(req.Bucket, req.PATH)
+	ctx.Status(http.StatusNoContent)
+}

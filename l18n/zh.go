@@ -5,6 +5,8 @@ import "github.com/gin-gonic/gin"
 var ZH_LAN = map[int]interface{}{
 	ForbiddenOperate: gin.H{"error": "权限不足"},
 
+	File_NotFound: gin.H{"error": "文件不存在"},
+
 	USER_NotFound: gin.H{"error": "用户未找到"},
 	User_HasExist: gin.H{"error": "用户已经存在"},
 
