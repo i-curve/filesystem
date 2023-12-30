@@ -12,5 +12,5 @@ type DeleteUser struct {
 type UpdateUser struct {
 	Name  string `json:"name" binding:"required"`
 	Auth  string `json:"auth"`
-	UType int    `json:"u_type"`
+	UType int    `json:"u_type" binding:"min=0,max=3"`
 }

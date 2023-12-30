@@ -1,8 +1,8 @@
 package handle
 
 import (
+	"filesystem/l18n"
 	"filesystem/pojo"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -51,8 +51,8 @@ func getAuth(ctx *gin.Context) (int64, *User) {
 
 func CreateUser(ctx *gin.Context) {
 	_, auth := getAuth(ctx)
-	if auth.UType != UTypeSystem { // 只有system用户才有权限
-		ctx.Status(403)
+	if auth.UType != UTypeSystem {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "只有system用户才有权限"})
 		return
 	}
 	var req pojo.CreateUser
@@ -60,12 +60,16 @@ func CreateUser(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errs.Translate(trans))
 		return
 	}
+	if checkExistUser(req.Name) {
+		ctx.JSON(http.StatusForbidden, lan[l18n.User_HasExist])
+		return
+	}
 	var user = User{
 		Name:  req.Name,
 		Auth:  transform(randStringRunes(8)),
 		UType: req.UType,
 	}
-	if err := data.mariadb.Create(&user).Error; err != nil {
+	if err := mariadb.Create(&user).Error; err != nil {
 		ctx.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
@@ -75,13 +79,13 @@ func CreateUser(ctx *gin.Context) {
 
 func DeleteUser(ctx *gin.Context) {
 	var req pojo.DeleteUser
-	if err := ctx.ShouldBind(&req); err != nil {
-		ctx.JSON(400, gin.H{"error": err.Error()})
+	if errs, ok := ctx.ShouldBind(&req).(validator.ValidationErrors); ok {
+		ctx.JSON(http.StatusBadRequest, errs.Translate(trans))
 		return
 	}
 	var user User
-	if err := data.mariadb.Where(&req).First(&user); err != nil {
-		ctx.Status(404)
+	if err := mariadb.Where(&req).First(&user).Error; err != nil {
+		ctx.JSON(http.StatusNotFound, lan[l18n.USER_NotFound])
 		return
 	}
 	_, auth := getAuth(ctx)
@@ -89,24 +93,23 @@ func DeleteUser(ctx *gin.Context) {
 		ctx.Status(403)
 		return
 	}
-	data.mariadb.Delete(&user)
+	mariadb.Delete(&user)
 	delete(users, user.Id)
 	ctx.Status(204)
 }
 
 func UpdateUser(ctx *gin.Context) {
 	var req pojo.UpdateUser
-	if err := ctx.ShouldBind(&req); err != nil {
-		if errs, ok := err.(validator.ValidationErrors); ok {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error_msg": fmt.Sprintf("参数错误: %v", errs.Translate(trans))})
-		} else {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error_msg": fmt.Sprintf("参数错误: %v", err)})
-		}
-		// ctx.JSON(400, gin.H{"error": err.Error()})
+	if errs, ok := ctx.ShouldBind(&req).(validator.ValidationErrors); ok {
+		ctx.JSON(http.StatusBadRequest, errs.Translate(trans))
 		return
 	}
 	var user User
-	data.mariadb.Where(&User{Name: req.Name}).First(&user)
+	if checkExistUser(req.Name) {
+		ctx.JSON(http.StatusNotFound, lan[l18n.USER_NotFound])
+		return
+	}
+	mariadb.Where(&User{Name: req.Name}).First(&user)
 	if len(req.Auth) > 0 {
 		user.Auth = transform(req.Auth)
 	}
@@ -118,6 +121,11 @@ func UpdateUser(ctx *gin.Context) {
 		}
 		user.UType = req.UType
 	}
-	data.mariadb.Where("name", req.Name).Updates(user)
+	mariadb.Where("name", req.Name).Updates(user)
+	users[user.Id] = &user
 	ctx.JSON(204, user)
+}
+
+func checkExistUser(name string) bool {
+	return mariadb.Where("name", name).First(&User{}).Error == nil
 }

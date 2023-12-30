@@ -3,8 +3,10 @@ package handle
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"filesystem/l18n"
 	"fmt"
 	"math/rand"
+	"os"
 
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
@@ -19,20 +21,29 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-var data = new(Database)
 var trans ut.Translator
+var BASE_DIR = "/var/www/filesystem"
+var lan = make(map[int]interface{})
 
 var users = make(map[int64]*User, 0)
-var buckets = make(map[int64]*Bucket, 0)
 
-type Database struct {
-	mariadb *gorm.DB
-}
+// var buckets = make(map[int64]*Bucket, 0)
+
+var mariadb *gorm.DB
 
 func Init() {
+	lan = l18n.ZH_LAN
+	initDir()
 	initTrans("zh")
 	initDB()
 	initData()
+}
+
+func initDir() {
+	if os.Getenv("BaseDir") != "" {
+		BASE_DIR = os.Getenv("BaseDir")
+	}
+	os.MkdirAll(BASE_DIR, os.ModePerm)
 }
 
 func initTrans(locale string) {
@@ -54,7 +65,7 @@ func initTrans(locale string) {
 func initDB() {
 	dsn := "root:123456@tcp(127.0.0.1:3306)/filesystem?charset=utf8mb4&parseTime=True&loc=Local"
 	var err error
-	data.mariadb, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
+	mariadb, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true,
 		},
@@ -62,18 +73,18 @@ func initDB() {
 	if err != nil {
 		panic("mysql connect error: " + err.Error())
 	}
-	data.mariadb.AutoMigrate(&User{}, &Bucket{})
+	mariadb.AutoMigrate(&User{}, &Bucket{})
 }
 
 func writeMem[T User | Bucket]() {
 	res := make([]T, 0)
-	data.mariadb.Find(&res)
+	mariadb.Find(&res)
 	for _, valRow := range res {
 		switch val := any(valRow).(type) {
 		case User:
 			users[val.Id] = &val
-		case Bucket:
-			buckets[val.Id] = &val
+			// case Bucket:
+			// 	buckets[val.Id] = &val
 		}
 	}
 }
@@ -81,7 +92,7 @@ func initData() {
 	writeMem[User]()
 	if len(users) == 0 {
 		auth := transform(randStringRunes(10))
-		if err := data.mariadb.Create(&User{
+		if err := mariadb.Create(&User{
 			Name:  "system",
 			Auth:  auth,
 			UType: UTypeSystem,
