@@ -2,6 +2,27 @@
 
 基于 golang + gin 的简单文件系统
 
+## web 服务
+
+启动端口: 8000
+
+用于 http 资源请求
+
+挂载目录: /var/www/filesystem
+
+## api 服务
+
+启动端口: 8001
+
+### user
+
+> user 等级:
+> system
+> admin
+> user
+
+### bucket
+
 ## Intro
 
 - path-url 固定转换
@@ -104,11 +125,3 @@ curl "http://localhost:8080/file?short_url=${short_url}" -X DELETE
 ```
 
 [详情请参考文档](https://www.apifox.cn/apidoc/shared-e29b73da-4337-4787-8a0f-e31312d8f99e/api-40901537)
-
-## 测试环境
-
-地址: [https://test.filesystem.ml](https://test.filesystem.ml)  
-[https://filesystem.ml](https://filesystem.ml/test)
-
-user: i-curve
-auth: 12345678
