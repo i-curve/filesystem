@@ -31,7 +31,7 @@ func ApiServer() *gin.Engine {
 // HttpServer web 静态资源
 func HttpServer() *gin.Engine {
 	r := gin.Default()
-	r.Static("/", "/var/www/filesystem")
+	handle.StaticRoute(r)
 	return r
 }
 

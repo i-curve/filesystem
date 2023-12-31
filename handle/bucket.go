@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -32,6 +33,23 @@ func authBucketNo(ctx *gin.Context, bucketName string) bool {
 
 func authBucket(ctx *gin.Context, bucketName string) bool {
 	return !authBucketNo(ctx, bucketName)
+}
+
+func StaticRoute(r *gin.Engine) {
+	staticRoute := r.Group("/")
+	staticRoute.Use(func(ctx *gin.Context) {
+		flags := strings.Split(ctx.Request.RequestURI, "/")
+		if len(flags) < 2 {
+			ctx.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+		if buckets[flags[1]].BType&BTypeRead == 0 {
+			ctx.AbortWithStatusJSON(http.StatusForbidden, lan[l18n.ForbiddenOperate])
+			return
+		}
+		ctx.Next()
+	})
+	staticRoute.Static("", BASE_DIR)
 }
 
 func BucketRoute(r *gin.Engine) {

@@ -2,8 +2,11 @@ package handle
 
 import (
 	"filesystem/l18n"
+	"io"
 	"mime/multipart"
 	"net/http"
+	"os"
+	"path"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -81,7 +84,18 @@ func (f Filesystem) download(ctx *gin.Context) {
 		ctx.JSON(http.StatusForbidden, lan[l18n.ForbiddenOperate])
 		return
 	}
-	// ctx.Writer
+
+	file, err := os.Open(path.Join(BASE_DIR, req.Bucket, req.PATH))
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.Writer.WriteHeader(http.StatusOK)
+	ctx.Header("Content-Type", "application/octet-stream")
+	ctx.Header("Content-Disposition", "attachment; filename="+path.Base(req.PATH))
+	ctx.Header("Content-Transfer-Encoding", "binary")
+	ctx.Header("Cache-Control", "no-cache")
+	io.Copy(ctx.Writer, file)
 }
 
 // 文件转移
