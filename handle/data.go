@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"filesystem/config"
-	"filesystem/l18n"
 	"fmt"
 	"math/rand"
 	"os"
@@ -30,26 +29,18 @@ var buckets = make(map[string]*Bucket, 0)
 
 var mariadb *gorm.DB
 
-func Init() {
-	lan = l18n.ZH_LAN
-	initDir()
-	initTrans("zh")
-	initDB()
-	initData()
-}
-
 func initDir() {
 	os.MkdirAll(config.BASE_DIR, os.ModePerm)
 }
 
-func initTrans(locale string) {
+func initTrans() {
 	// 修改gin框架中的Validator引擎属性，实现自定制
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		enLan := en.New()
 		zhLan := zh.New()
 		uni := ut.New(enLan, zhLan, enLan)
-		trans, _ = uni.GetTranslator(locale) // locale 通常取决于 http 请求头的 'Accept-Language'
-		switch locale {                      // 注册翻译器
+		trans, _ = uni.GetTranslator(config.LANGUAGE) // locale 通常取决于 http 请求头的 'Accept-Language'
+		switch config.LANGUAGE {                      // 注册翻译器
 		case "zh":
 			zhTranslations.RegisterDefaultTranslations(v, trans)
 		default:

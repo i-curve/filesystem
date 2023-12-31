@@ -35,7 +35,14 @@ func authJwt(ctx *gin.Context) {
 	ctx.AbortWithStatus(401)
 }
 
-func authUser(ctx *gin.Context) {}
+func authSystem(ctx *gin.Context) {
+	_, auth := getAuth(ctx)
+	if auth.UType != UTypeSystem && auth.UType != UTypeAdmin {
+		ctx.AbortWithStatus(403)
+		return
+	}
+	ctx.Next()
+}
 
 func UserRoute(r *gin.Engine) {
 	userRoute := r.Group("/user", authJwt)
@@ -107,7 +114,7 @@ func UpdateUser(ctx *gin.Context) {
 		return
 	}
 	var user User
-	if checkExistUser(req.Name) {
+	if !checkExistUser(req.Name) {
 		ctx.JSON(http.StatusNotFound, lan[l18n.USER_NotFound])
 		return
 	}

@@ -3,16 +3,11 @@ package main
 import (
 	"filesystem/config"
 	"filesystem/handle"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 const version = "2.0.0"
-
-func init() {
-	handle.Init()
-}
 
 func getVersion(ctx *gin.Context) {
 	ctx.String(200, "%s", version)
@@ -22,10 +17,8 @@ func getVersion(ctx *gin.Context) {
 func ApiServer() *gin.Engine {
 	r := gin.Default()
 	r.GET("/version", getVersion)
-	r.POST("/refresh", func(ctx *gin.Context) {
-		handle.Init()
-		ctx.Status(http.StatusNoContent)
-	})
+	handle.AdminRotue(r)
+
 	handle.UserRoute(r)
 	handle.BucketRoute(r)
 	handle.FileRoute(r)

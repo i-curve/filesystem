@@ -32,9 +32,9 @@ func authBucketNo(ctx *gin.Context, bucketName string) bool {
 	return auth.UType == UTypeUser && bucket.UId != auth.Id
 }
 
-func authBucket(ctx *gin.Context, bucketName string) bool {
-	return !authBucketNo(ctx, bucketName)
-}
+// func authBucket(ctx *gin.Context, bucketName string) bool {
+// 	return !authBucketNo(ctx, bucketName)
+// }
 
 func StaticRoute(r *gin.Engine) {
 	staticRoute := r.Group("/")
@@ -44,11 +44,13 @@ func StaticRoute(r *gin.Engine) {
 			ctx.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
-		if buckets[flags[1]].BType&BTypeRead == 0 {
+		if bucket, ok := buckets[flags[1]]; !ok {
+			ctx.AbortWithStatusJSON(http.StatusNotFound, lan[l18n.BUCKET_NotFound])
+		} else if bucket.BType&BTypeRead == 0 {
 			ctx.AbortWithStatusJSON(http.StatusForbidden, lan[l18n.ForbiddenOperate])
-			return
+		} else {
+			ctx.Next()
 		}
-		ctx.Next()
 	})
 	staticRoute.Static("", config.BASE_DIR)
 }
