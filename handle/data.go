@@ -3,6 +3,7 @@ package handle
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"filesystem/config"
 	"filesystem/l18n"
 	"fmt"
 	"math/rand"
@@ -22,7 +23,6 @@ import (
 )
 
 var trans ut.Translator
-var BASE_DIR = "/var/www/filesystem"
 var lan = make(map[int]interface{})
 
 var users = make(map[int64]*User, 0)
@@ -39,10 +39,7 @@ func Init() {
 }
 
 func initDir() {
-	if os.Getenv("BaseDir") != "" {
-		BASE_DIR = os.Getenv("BaseDir")
-	}
-	os.MkdirAll(BASE_DIR, os.ModePerm)
+	os.MkdirAll(config.BASE_DIR, os.ModePerm)
 }
 
 func initTrans(locale string) {
@@ -62,9 +59,8 @@ func initTrans(locale string) {
 }
 
 func initDB() {
-	dsn := "root:123456@tcp(127.0.0.1:3306)/filesystem?charset=utf8mb4&parseTime=True&loc=Local"
 	var err error
-	mariadb, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
+	mariadb, err = gorm.Open(mysql.Open(config.DSN), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true,
 		},
@@ -75,8 +71,7 @@ func initDB() {
 	mariadb.AutoMigrate(&User{}, &Bucket{})
 }
 
-func writeMem[T User | Bucket]() (user *User) {
-	res := make([]T, 0)
+func writeMem[T User | Bucket](res []T) (user *User) {
 	mariadb.Find(&res)
 	for _, valRow := range res {
 		switch val := any(valRow).(type) {
@@ -100,14 +95,10 @@ func initData() {
 			Auth:  auth,
 			UType: UTypeSystem,
 		})
+		fmt.Printf("system user\nuser: system\nauth: %s\n", auth)
 	}
-	systemuser := writeMem[User]()
-	writeMem[Bucket]()
-	if systemuser != nil {
-		fmt.Printf("\tsystem user\n")
-		fmt.Printf("\tuser: %s\n", systemuser.Name)
-		fmt.Printf("\tauth: %s\n", systemuser.Auth)
-	}
+	writeMem([]User{})
+	writeMem([]Bucket{})
 }
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")

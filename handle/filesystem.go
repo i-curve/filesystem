@@ -1,6 +1,7 @@
 package handle
 
 import (
+	"filesystem/config"
 	"filesystem/l18n"
 	"io"
 	"mime/multipart"
@@ -85,7 +86,7 @@ func (f Filesystem) download(ctx *gin.Context) {
 		return
 	}
 
-	file, err := os.Open(path.Join(BASE_DIR, req.Bucket, req.PATH))
+	file, err := os.Open(path.Join(config.BASE_DIR, req.Bucket, req.PATH))
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

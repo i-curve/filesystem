@@ -2,44 +2,33 @@ package config
 
 import (
 	"fmt"
-	"math/rand"
 	"os"
+	"strings"
 )
 
-type User struct {
-	User string `json:"user" form:"user"`
-	Auth string `json:"auth" form:"auth"`
+var internal_env = map[string]string{
+	"MODE":           "RELEASE",
+	"BASE_DIR":       "/var/www/filesystem",
+	"DSN":            "%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+	"MYSQL_HOST":     "127.0.0.1",
+	"MYSQL_USER":     "root",
+	"MYSQL_PASSWORD": "123456",
+	"MYSQL_PORT":     "3306",
+	"DATABASE":       "filesystem",
 }
+var MODE = ""
+var BASE_DIR = ""
+var DSN = ""
 
-var Users = make([]User, 0)
-var BaseURL string = "http://127.0.0.1"
-
-func Init() {
-	baseURL := os.Getenv("BASE_URL")
-	if baseURL != "" {
-		BaseURL = baseURL
-	}
-	if os.Getenv("USER") != "" {
-		Users = append(Users, User{
-			User: os.Getenv("USER"),
-			Auth: os.Getenv("AUTH"),
-		})
-	} else {
-		var user = User{
-			User: RandStringRunes(6),
-			Auth: RandStringRunes(8),
+func init() {
+	for _, env := range os.Environ() {
+		items := strings.Split(env, "=")
+		if _, ok := internal_env[items[0]]; ok {
+			internal_env[items[0]] = items[1]
 		}
-		Users = append(Users, user)
-		fmt.Printf("未指定用户和认证,创建临时用户认证:\n{user:%s auth:%s}\n", user.User, user.Auth)
 	}
-}
-
-var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-
-func RandStringRunes(n int) string {
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = letterRunes[rand.Intn(len(letterRunes))]
-	}
-	return string(b)
+	MODE = internal_env["MODE"]
+	BASE_DIR = internal_env["BASE_DIR"]
+	DSN = fmt.Sprintf(internal_env["DSN"], internal_env["MYSQL_USER"], internal_env["MYSQL_PASSWORD"],
+		internal_env["MYSQL_HOST"], internal_env["MYSQL_PORT"], internal_env["DATABASE"])
 }

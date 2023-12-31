@@ -1,8 +1,9 @@
 package main
 
 import (
+	"filesystem/config"
 	"filesystem/handle"
-	"os"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,14 +14,17 @@ func init() {
 	handle.Init()
 }
 
+func getVersion(ctx *gin.Context) {
+	ctx.String(200, "%s", version)
+}
+
 // ApiServer api接口
 func ApiServer() *gin.Engine {
 	r := gin.Default()
-	r.GET("/version", func(ctx *gin.Context) {
-		ctx.String(200, "%s", version)
-	})
+	r.GET("/version", getVersion)
 	r.POST("/refresh", func(ctx *gin.Context) {
-		// config.Init()
+		handle.Init()
+		ctx.Status(http.StatusNoContent)
 	})
 	handle.UserRoute(r)
 	handle.BucketRoute(r)
@@ -36,8 +40,8 @@ func HttpServer() *gin.Engine {
 }
 
 func main() {
-	switch os.Getenv("mode") {
-	case "debug":
+	switch config.MODE {
+	case "DEBUG":
 		gin.SetMode("debug")
 	default:
 		gin.SetMode("release")

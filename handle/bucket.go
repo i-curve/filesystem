@@ -1,6 +1,7 @@
 package handle
 
 import (
+	"filesystem/config"
 	"filesystem/l18n"
 	"filesystem/pojo"
 	"net/http"
@@ -49,7 +50,7 @@ func StaticRoute(r *gin.Engine) {
 		}
 		ctx.Next()
 	})
-	staticRoute.Static("", BASE_DIR)
+	staticRoute.Static("", config.BASE_DIR)
 }
 
 func BucketRoute(r *gin.Engine) {
@@ -78,7 +79,7 @@ func createBucket(ctx *gin.Context) {
 	}
 	mariadb.Create(&bucket)
 	buckets[req.Name] = &bucket
-	mkdir(path.Join(BASE_DIR, req.Name))
+	mkdir(path.Join(config.BASE_DIR, req.Name))
 	ctx.Status(http.StatusCreated)
 }
 
@@ -101,7 +102,7 @@ func deleteBucket(ctx *gin.Context) {
 	}
 	mariadb.Delete(&bucket)
 	delete(buckets, req.Name)
-	os.RemoveAll(path.Join(BASE_DIR, req.Name))
+	os.RemoveAll(path.Join(config.BASE_DIR, req.Name))
 	ctx.Status(http.StatusNoContent)
 }
 
