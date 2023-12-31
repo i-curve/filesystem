@@ -1,3 +1,9 @@
-.PHONY: build
+VERSION=$(shell git describe --tags --always)
+
 build:
-	docker image build -t filesystem .
+	go build -o filesystem -ldflags "-X main.Version=$(VERSION)" main.go 
+
+.PHONY: docker
+docker: build
+	docker image build -t filesystem:$(VERSION) .
+

@@ -14,26 +14,26 @@ import (
 )
 
 type fileUpload struct {
-	Bucket string                `json:"bucket" form:"bucket" binding:"request"`
-	PATH   string                `json:"path" form:"path" binding:"request"`
-	File   *multipart.FileHeader `json:"file" form:"file" binding:"request"`
+	Bucket string                `json:"bucket" form:"bucket" binding:"required"`
+	PATH   string                `json:"path" form:"path" binding:"required"`
+	File   *multipart.FileHeader `json:"file" form:"file" binding:"required"`
 }
 
 type fileDelete struct {
-	Bucket string `json:"bucket" form:"bucket" binding:"request"`
-	PATH   string `json:"path" form:"path" binding:"request"`
+	Bucket string `json:"bucket" form:"bucket" binding:"required"`
+	PATH   string `json:"path" form:"path" binding:"required"`
 }
 
 type fileDownload struct {
-	Bucket string `json:"bucket" form:"bucket" binding:"request"`
-	PATH   string `json:"path" form:"path" binding:"request"`
+	Bucket string `json:"bucket" form:"bucket" binding:"required"`
+	PATH   string `json:"path" form:"path" binding:"required"`
 }
 
 type fileCopy struct {
-	SBucket string `json:"s_bucket" form:"s_bucket" binding:"request"`
-	SPath   string `json:"s_path" form:"s_path" binding:"request"`
+	SBucket string `json:"s_bucket" form:"s_bucket" binding:"required"`
+	SPath   string `json:"s_path" form:"s_path" binding:"required"`
 	DBucket string
-	DPath   string `json:"d_path" form:"d_path" binding:"request"`
+	DPath   string `json:"d_path" form:"d_path" binding:"required"`
 }
 
 func FileRoute(r *gin.Engine) {
@@ -142,6 +142,7 @@ func (f Filesystem) delete(ctx *gin.Context) {
 	var req fileDelete
 	if errs, ok := ctx.ShouldBind(&req).(validator.ValidationErrors); ok {
 		ctx.JSON(http.StatusBadRequest, errs.Translate(trans))
+		return
 	}
 	if !checkExistBucket(req.Bucket) {
 		ctx.JSON(http.StatusForbidden, lan[l18n.BUCKET_NotFound])

@@ -7,10 +7,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const version = "2.0.0"
+// go build -ldflags "-X main.Version=x.y.z"
+// 2.0.0
+var Version = ""
 
 func getVersion(ctx *gin.Context) {
-	ctx.String(200, "%s", version)
+	ctx.String(200, "%s", Version)
 }
 
 // ApiServer api接口

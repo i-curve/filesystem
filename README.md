@@ -1,40 +1,177 @@
 # filesystem
 
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+- [filesystem](#filesystem)
+  - [I. web 服务](#i-web-服务)
+  - [II. api 服务](#ii-api-服务)
+    - [1. user](#1-user)
+    - [2. bucket](#2-bucket)
+    - [3. filesystem](#3-filesystem)
+    - [4. admin](#4-admin)
+      - [权限刷新](#权限刷新)
+  - [Deploy](#deploy)
+    - [1. 构建程序](#1-构建程序)
+    - [2. docker 构建](#2-docker-构建)
+    - [3. docker hub](#3-docker-hub)
+    - [4. 运行 docker](#4-运行-docker)
+    - [5. 检测是否部署成功](#5-检测是否部署成功)
+
+<!-- /code_chunk_output -->
+
 基于 golang + gin 的简单文件系统
 
-## web 服务
+## I. web 服务
 
-启动端口: 8000
+> 0.0.0.0: 8000
 
-用于 http 资源请求
+用于 http 资源请求, 只能访问,不能上传
 
-挂载目录: /var/www/filesystem
+默认挂载目录: /var/www/filesystem
 
-## api 服务
+可以直接通过 web 端进行访问
 
-启动端口: 8001
+- 下载
 
-### user
+下载条件:
+
+1. bucker1 桶下有 test.txt 文件
+2. bucket1 属性为公有可访问
+
+[http://localhost:8000/bucket1/test.txt]()
+
+## II. api 服务
+
+0.0.0.0: 8001
+
+api 服务需要进行身份认证, 需要在请求头添加 user,auth 进行身份认证
+
+### 1. user
 
 > user 等级:
-> system
-> admin
-> user
+> system: 默认会自动生成一个 system 用户
+> admin: 管理用户
+> user: 不同用户, 只对自己创建的桶拥有权限
 
-### bucket
+- 添加用户
 
-## Intro
+```bash
+curl -X POST "${URL}/user" \
+--header "user: ${USER}" \
+--header "auth: ${AUTH}" \
+--header 'Content-Type: application/json' \
+--data-raw '{"name": "i-curve","u_type": 2}'
+```
 
-- path-url 固定转换
-- 文件属性公有
+- 删除用户
 
-filesystem 是一套基于规则的文件系统存储系统，根据特定 path 转为特定 url 地址。所有文件为公有属性，所有人可以进行访问。
+```bash
+curl -X DELETE "${URL}/user" \
+--header "user: ${USER}" \
+--header "auth: ${AUTH}" \
+--header 'Content-Type: application/json' \
+--data-raw '{"name": "i-curve"}'
+```
 
-把文件系统从整个项目中进行抽离，优化项目结构
+### 2. bucket
+
+- 创建 bucket
+
+```bash
+curl -X POST "${URL}/bucket" \
+--header "user: ${USER}" \
+--header "auth: ${AUTH}" \
+--header 'Content-Type: application/json' \
+--data-raw '{"name": "bucket2", "b_type": 3}'
+```
+
+- 删除 bucket
+
+```bash
+curl -X DELETE "${URL}/bucket" \
+--header "user: ${USER}" \
+--header "auth: ${AUTH}" \
+--header 'Content-Type: application/json' \
+--data-raw '{"name": "bucket2"}'
+```
+
+### 3. filesystem
+
+- 文件上传
+
+上传 a.txt 文件到 bucket1 的 test/01 内
+
+```bash
+curl -X POST "${URL}/file/create" \
+--header "user: ${USER}" \
+--header "auth: ${AUTH}" \
+-F "file=@/root/a.txt" \
+-F "bucket=bucket1" \
+-F "path=/test/a.txt"
+```
+
+- 文件下载
+
+```bash
+curl -X GET "${URL}/file/download?bucket=bucket1&path=/test/a.txt" \
+--header "user: ${USER}" \
+--header "auth: ${AUTH}"
+```
+
+- 文件删除
+
+```bash
+curl -X DELETE "${URL}/file/delete?bucket=bucket1&path=/test/01" \
+--header "user: ${USER}" \
+--header "auth: ${AUTH}"
+```
+
+- 文件移动
+
+```bash
+curl -X POST "${URL}/file/move" \
+--header "user: ${USER}" \
+--header "auth: ${AUTH}" \
+--header "Content-Type: application/json" \
+-d '{"s_bucket": "bucket1",
+"s_path": "test/a.txt","d_bucket": "bucket1","d_path":"test/b.txt"}'
+```
+
+- 文件复制
+
+```bash
+curl -X POST "${URL}/file/copy" \
+--header "user: ${USER}" \
+--header "auth: ${AUTH}" \
+--header "Content-Type: application/json" \
+-d '{"s_bucket":"bucket1","s_path":"test/a.txt","d_bucket": "bucket1","d_path": "new_path/dd/b.txt"}'
+```
+
+### 4. admin
+
+管理接口
+
+#### 权限刷新
+
+当进行数据库更改后, 并不会直接生效, 需要进行权限刷新
+
+```bash
+curl -X POST "${URL}/refresh" \
+--header "user: ${USER}" \
+--header  "auth: ${AUTH}"
+```
+
+- 获取版本信息
+
+```bash
+curl "${URL}/version" \
+--header  "user: ${USER}" \
+--header  "auth: ${AUTH}"
+```
 
 ## Deploy
-
-- 源码部署
 
 克隆项目
 
@@ -42,86 +179,66 @@ filesystem 是一套基于规则的文件系统存储系统，根据特定 path 
 git clone https://github.com/i-curve/filesystem.git
 ```
 
-进入项目并启动
+### 1. 构建程序
+
+生成可执行文件 filesystem
 
 ```bash
-cd filesystem && go run main.go
+cd filesystem && make
 ```
 
-- 下载可执行文件
+### 2. docker 构建
 
-[下载位置](https://github.com/i-curve/filesystem/releases)
+构建 docker 镜像
 
-- 使用 docker
+```bash
+make docker
+```
+
+### 3. docker hub
 
 拉取镜像
 
 ```bash
-docker pull wjuncurve/filesystem
+docker pull wjuncurve/filesystem:latest
 ```
 
-启动镜像
+### 4. 运行 docker
 
 ```bash
-docker run -d --rm \
- --name filesystem \
- -p 8080:8080 \
- -v /var/www/html/data:/data \
- -e "BASE_URL=http://127.0.0.1" \
- -e "USER=i-curve" \
- -e "AUTH=12345678" \
-    wjuncurve/filesystem
+docker run --name filesystem -d  \
+ -p 8000:8000 -p 8001:8001 \
+ -e "MYSQL_HOST=host.docker.internal" \
+    filesystem
 ```
 
--v 把路径挂在到前端展示的页面上  
--p 映射想要的端口  
-BASE_URL: 网络文件 url  
-USER: 用户  
-AUTH: 用户的认证
+| 变量名         | 说明                                    |
+| -------------- | --------------------------------------- |
+| LANGUAGE       | 程序运行语言,默认 zh 中文(en 可选)      |
+| MODE           | 运行模式 (DEBUG \| RELEASE)             |
+| BASE_DIR       | 默认程序存储目录为(/var/www/filesystem) |
+| MYSQL_HOST     | 数据库地址                              |
+| MYSQL_USER     | 数据库用户                              |
+| MYSQL_PASSWORD | 数据库密码                              |
+| MYSQL_PORT     | 数据库端口                              |
+| DATABASE       | 数据库名 (默认 filesystem)              |
 
-如果未指定 USER 和 AUTH 的话, 为生成一个临时的
+### 5. 检测是否部署成功
 
-- 检测是否部署成功
+查看版本信息
 
 ```bash
-# 查看版本信息
-curl "http://localhost:8080/version"
+curl "http://localhost:8001/version"
 ```
 
-## Usage
-
-文件上传
+查看生成 system 用户信息
 
 ```bash
-curl 'http://localhost:8080/upload' -X POST \
---form 'file=@"C:\\Users\\curve\\Pictures\\images.jpg"'
-
+docker logs filesystem
 ```
 
-文件获取
-
-```bash
-curl "http://localhost:8080/file?short_url=${url}"
+```txt
+system user
+user: system
+auth: d6837f276686cbfe4852c8d8c5104f59
 ```
-
-文件复制
-
-```bash
-curl "http://localhost:8080/copy" -X POST \
-    -d "short_url=${old_url}&new_url=${new_url}"
-```
-
-文件转移
-
-```bash
-curl "http://localhost:8080/move" -X POST \
-    -d "short_url=${old_url}&new_url=${new_url}"
-```
-
-文件删除
-
-```bash
-curl "http://localhost:8080/file?short_url=${short_url}" -X DELETE
-```
-
-[详情请参考文档](https://www.apifox.cn/apidoc/shared-e29b73da-4337-4787-8a0f-e31312d8f99e/api-40901537)

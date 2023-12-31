@@ -1,7 +1,7 @@
-FROM golang:1.18
+FROM ubuntu:22.04
+
 LABEL maintainer="i-curve" email="i-curve@qq.com"
 
 COPY filesystem /usr/bin
-VOLUME [ "/data" ]
 
-CMD ["filesystem", "-c /etc/config.json"]
+CMD ["filesystem"]
