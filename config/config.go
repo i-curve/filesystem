@@ -10,7 +10,7 @@ var internal_env = map[string]string{
 	"LANGUAGE":       "zh", // en|zh
 	"MODE":           "RELEASE",
 	"BASE_DIR":       "/var/www/filesystem",
-	"DSN":            "%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+	"DSN":            "%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local&timeout=2s",
 	"MYSQL_HOST":     "127.0.0.1",
 	"MYSQL_USER":     "root",
 	"MYSQL_PASSWORD": "123456",
