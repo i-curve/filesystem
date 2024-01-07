@@ -104,18 +104,18 @@ curl -X DELETE "${URL}/bucket" \
 上传 a.txt 文件到 bucket1 的 test/01 内
 
 ```bash
-curl -X POST "${URL}/file/create" \
+curl -X POST "${URL}/file/upload" \
 --header "user: ${USER}" \
 --header "auth: ${AUTH}" \
 -F "file=@/root/a.txt" \
 -F "bucket=bucket1" \
--F "path=/test/a.txt"
+-F "key=/test/a.txt"
 ```
 
 - 文件下载
 
 ```bash
-curl -X GET "${URL}/file/download?bucket=bucket1&path=/test/a.txt" \
+curl -X GET "${URL}/file/download?bucket=bucket1&key=/test/a.txt" \
 --header "user: ${USER}" \
 --header "auth: ${AUTH}"
 ```
@@ -123,7 +123,7 @@ curl -X GET "${URL}/file/download?bucket=bucket1&path=/test/a.txt" \
 - 文件删除
 
 ```bash
-curl -X DELETE "${URL}/file/delete?bucket=bucket1&path=/test/01" \
+curl -X DELETE "${URL}/file/delete?bucket=bucket1&key=/test/01" \
 --header "user: ${USER}" \
 --header "auth: ${AUTH}"
 ```
@@ -136,7 +136,7 @@ curl -X POST "${URL}/file/move" \
 --header "auth: ${AUTH}" \
 --header "Content-Type: application/json" \
 -d '{"s_bucket": "bucket1",
-"s_path": "test/a.txt","d_bucket": "bucket1","d_path":"test/b.txt"}'
+"s_key": "test/a.txt","d_bucket": "bucket1","d_key":"test/b.txt"}'
 ```
 
 - 文件复制
@@ -146,7 +146,7 @@ curl -X POST "${URL}/file/copy" \
 --header "user: ${USER}" \
 --header "auth: ${AUTH}" \
 --header "Content-Type: application/json" \
--d '{"s_bucket":"bucket1","s_path":"test/a.txt","d_bucket": "bucket1","d_path": "new_path/dd/b.txt"}'
+-d '{"s_bucket":"bucket1","s_key":"test/a.txt","d_bucket": "bucket1","d_key": "new_path/dd/b.txt"}'
 ```
 
 ### 4. admin

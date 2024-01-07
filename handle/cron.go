@@ -23,6 +23,6 @@ func initCron() {
 func CronDelete(cron *Cron) {
 	time.AfterFunc(-time.Since(cron.DeleteTime), func() {
 		removeFile(cron.Bucket, cron.Path)
-		mariadb.Delete(&cron)
+		mariadb.Delete(cron)
 	})
 }

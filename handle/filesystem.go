@@ -16,33 +16,33 @@ import (
 
 type fileUpload struct {
 	Bucket   string                `json:"bucket" form:"bucket" binding:"required"`
-	PATH     string                `json:"path" form:"path" binding:"required"`
+	Key      string                `json:"key" form:"key" binding:"required"`
 	File     *multipart.FileHeader `json:"file" form:"file" binding:"required"`
 	Duration int64                 `json:"duration" form:"duration"`
 }
 
 type fileDelete struct {
 	Bucket string `json:"bucket" form:"bucket" binding:"required"`
-	PATH   string `json:"path" form:"path" binding:"required"`
+	Key    string `json:"key" form:"key" binding:"required"`
 }
 
 type fileDownload struct {
 	Bucket string `json:"bucket" form:"bucket" binding:"required"`
-	PATH   string `json:"path" form:"path" binding:"required"`
+	Key    string `json:"key" form:"key" binding:"required"`
 }
 
 type fileCopy struct {
 	SBucket string `json:"s_bucket" form:"s_bucket" binding:"required"`
-	SPath   string `json:"s_path" form:"s_path" binding:"required"`
+	SKey    string `json:"s_key" form:"s_key" binding:"required"`
 	DBucket string
-	DPath   string `json:"d_path" form:"d_path" binding:"required"`
+	DKey    string `json:"d_key" form:"d_key" binding:"required"`
 }
 
 func FileRoute(r *gin.Engine) {
 	fileRoute := r.Group("file", authJwt)
 	{
 		contact := Filesystem{}
-		fileRoute.POST("/create", contact.create)    // 文件上传
+		fileRoute.POST("/upload", contact.create)    // 文件上传
 		fileRoute.GET("/download", contact.download) // 文件下载
 		fileRoute.POST("/copy", contact.copy)        // 文件复制
 		fileRoute.POST("/move", contact.move)        // 文件转移
@@ -69,14 +69,14 @@ func (f Filesystem) create(ctx *gin.Context) {
 		return
 	}
 	r, _ := req.File.Open()
-	writeFile(req.Bucket, req.PATH, r)
+	writeFile(req.Bucket, req.Key, r)
 	if buckets[req.Bucket].IsTemp {
 		req.Duration = config.TEMP_DURATION
 	}
 	if req.Duration > 0 {
 		var cron = Cron{
 			Bucket:     req.Bucket,
-			Path:       req.PATH,
+			Path:       req.Key,
 			DeleteTime: time.Now().Add(time.Second * time.Duration(req.Duration)),
 		}
 		mariadb.Create(&cron)
@@ -100,14 +100,14 @@ func (f Filesystem) download(ctx *gin.Context) {
 		return
 	}
 
-	file, err := os.Open(path.Join(config.BASE_DIR, req.Bucket, req.PATH))
+	file, err := os.Open(path.Join(config.BASE_DIR, req.Bucket, req.Key))
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	ctx.Writer.WriteHeader(http.StatusOK)
 	ctx.Header("Content-Type", "application/octet-stream")
-	ctx.Header("Content-Disposition", "attachment; filename="+path.Base(req.PATH))
+	ctx.Header("Content-Disposition", "attachment; filename="+path.Base(req.Key))
 	ctx.Header("Content-Transfer-Encoding", "binary")
 	ctx.Header("Cache-Control", "no-cache")
 	io.Copy(ctx.Writer, file)
@@ -120,7 +120,7 @@ func (f Filesystem) move(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errs.Translate(trans))
 		return
 	}
-	if !checkExistFile(req.SBucket, req.SPath) {
+	if !checkExistFile(req.SBucket, req.SKey) {
 		ctx.JSON(http.StatusBadRequest, lan[l18n.File_NotFound])
 		return
 	}
@@ -128,7 +128,7 @@ func (f Filesystem) move(ctx *gin.Context) {
 		ctx.JSON(http.StatusForbidden, lan[l18n.ForbiddenOperate])
 		return
 	}
-	moveFile(req.SBucket, req.SPath, req.DBucket, req.DPath)
+	moveFile(req.SBucket, req.SKey, req.DBucket, req.DKey)
 	ctx.Status(http.StatusOK)
 }
 
@@ -139,7 +139,7 @@ func (f Filesystem) copy(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errs.Translate(trans))
 		return
 	}
-	if !checkExistFile(req.SBucket, req.SPath) {
+	if !checkExistFile(req.SBucket, req.SKey) {
 		ctx.JSON(http.StatusBadRequest, lan[l18n.File_NotFound])
 		return
 	}
@@ -147,7 +147,7 @@ func (f Filesystem) copy(ctx *gin.Context) {
 		ctx.JSON(http.StatusForbidden, lan[l18n.ForbiddenOperate])
 		return
 	}
-	copyFile(req.SBucket, req.SPath, req.DBucket, req.DPath)
+	copyFile(req.SBucket, req.SKey, req.DBucket, req.DKey)
 	ctx.Status(http.StatusOK)
 }
 
@@ -166,6 +166,6 @@ func (f Filesystem) delete(ctx *gin.Context) {
 		ctx.JSON(http.StatusForbidden, lan[l18n.ForbiddenOperate])
 		return
 	}
-	removeFile(req.Bucket, req.PATH)
+	removeFile(req.Bucket, req.Key)
 	ctx.Status(http.StatusNoContent)
 }
