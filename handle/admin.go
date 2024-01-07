@@ -18,6 +18,7 @@ func Init() {
 	initTrans()
 	initDB()
 	initData()
+	initCron()
 }
 
 func AdminRotue(r *gin.Engine) {
