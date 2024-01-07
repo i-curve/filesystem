@@ -136,5 +136,5 @@ func UpdateUser(ctx *gin.Context) {
 }
 
 func checkExistUser(name string) bool {
-	return mariadb.Where("name", name).First(&User{}).Error == nil
+	return name != "" && mariadb.Where("name", name).First(&User{}).Error == nil
 }

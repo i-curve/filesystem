@@ -111,7 +111,5 @@ func deleteBucket(ctx *gin.Context) {
 }
 
 func checkExistBucket(name string) bool {
-	return name != "" && mariadb.Where(&Bucket{
-		Name: name,
-	}).First(&Bucket{}).Error == nil
+	return name != "" && mariadb.Where("name", name).First(&Bucket{}).Error == nil
 }

@@ -16,18 +16,18 @@ func mkdir(dirkey string) {
 	os.MkdirAll(dirkey, os.ModePerm)
 }
 
-func removedir(dirkey string) {
+func removedir(root, dirkey string) {
 	dirs, err := os.ReadDir(dirkey)
-	if err == nil && len(dirs) == 0 {
+	if err == nil && len(dirs) == 0 && root != dirkey {
 		os.Remove(dirkey)
-		removedir(path.Dir(dirkey))
+		removedir(root, path.Dir(dirkey))
 	}
 }
 
 func removeFile(bucket string, filename string) {
 	key := path.Join(config.BASE_DIR, bucket, filename)
 	os.Remove(key)
-	removedir(path.Dir(key))
+	removedir(path.Join(config.BASE_DIR, bucket), path.Dir(key))
 }
 
 func writeFile(bucket string, filename string, r io.Reader) {
