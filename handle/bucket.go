@@ -14,10 +14,11 @@ import (
 )
 
 type Bucket struct {
-	Id    int64  `json:"id"`
-	Name  string `json:"name"`
-	UId   int64  `json:"u_id"`
-	BType int    `json:"b_type"`
+	Id     int64  `json:"id"`
+	Name   string `json:"name"`
+	UId    int64  `json:"u_id"`
+	BType  int    `json:"b_type"`
+	IsTemp bool   `json:"is_temp"`
 }
 
 const (
@@ -75,9 +76,10 @@ func createBucket(ctx *gin.Context) {
 	}
 	uid, _ := getAuth(ctx)
 	var bucket = Bucket{
-		Name:  req.Name,
-		UId:   uid,
-		BType: req.BType,
+		Name:   req.Name,
+		UId:    uid,
+		BType:  req.BType,
+		IsTemp: req.IsTemp,
 	}
 	mariadb.Create(&bucket)
 	buckets[req.Name] = &bucket
@@ -109,7 +111,5 @@ func deleteBucket(ctx *gin.Context) {
 }
 
 func checkExistBucket(name string) bool {
-	return name != "" && mariadb.Where(&Bucket{
-		Name: name,
-	}).First(&Bucket{}).Error == nil
+	return name != "" && mariadb.Where("name", name).First(&Bucket{}).Error == nil
 }

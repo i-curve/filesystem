@@ -7,8 +7,8 @@ import (
 	"path"
 )
 
-func checkExistFile(bucket string, filename string) bool {
-	_, err := os.Stat(path.Join(config.BASE_DIR, bucket, filename))
+func checkExistFile(bucket string, key string) bool {
+	_, err := os.Stat(path.Join(config.BASE_DIR, bucket, key))
 	return err == nil
 }
 
@@ -16,34 +16,34 @@ func mkdir(dirkey string) {
 	os.MkdirAll(dirkey, os.ModePerm)
 }
 
-func removedir(dirkey string) {
+func removedir(root, dirkey string) {
 	dirs, err := os.ReadDir(dirkey)
-	if err == nil && len(dirs) == 0 {
+	if err == nil && len(dirs) == 0 && root != dirkey {
 		os.Remove(dirkey)
-		removedir(path.Dir(dirkey))
+		removedir(root, path.Dir(dirkey))
 	}
 }
 
-func removeFile(bucket string, filename string) {
-	key := path.Join(config.BASE_DIR, bucket, filename)
-	os.Remove(key)
-	removedir(path.Dir(key))
+func removeFile(bucket string, key string) {
+	filename := path.Join(config.BASE_DIR, bucket, key)
+	os.Remove(filename)
+	removedir(path.Join(config.BASE_DIR, bucket), path.Dir(filename))
 }
 
-func writeFile(bucket string, filename string, r io.Reader) {
-	key := path.Join(config.BASE_DIR, bucket, filename)
-	mkdir(path.Dir(key))
-	f, _ := os.Create(key)
+func writeFile(bucket string, key string, r io.Reader) {
+	filename := path.Join(config.BASE_DIR, bucket, key)
+	mkdir(path.Dir(filename))
+	f, _ := os.Create(filename)
 	io.Copy(f, r)
 }
 
-func copyFile(sbucket, sfilename, dbucket, dfilename string) {
-	r, _ := os.Open(path.Join(config.BASE_DIR, sbucket, sfilename))
-	writeFile(dbucket, dfilename, r)
+func copyFile(sbucket, skey, dbucket, dkey string) {
+	r, _ := os.Open(path.Join(config.BASE_DIR, sbucket, skey))
+	writeFile(dbucket, dkey, r)
 
 }
 
-func moveFile(sbucket, sfilename, dbucket, dfilename string) {
-	copyFile(sbucket, sfilename, dbucket, dfilename)
-	removeFile(sbucket, sfilename)
+func moveFile(sbucket, skey, dbucket, dkey string) {
+	copyFile(sbucket, skey, dbucket, dkey)
+	removeFile(sbucket, skey)
 }
