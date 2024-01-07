@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"sync"
 
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
@@ -24,8 +25,9 @@ import (
 var trans ut.Translator
 var lan = make(map[int]interface{})
 
-var users = make(map[int64]*User, 0)
-var buckets = make(map[string]*Bucket, 0)
+var dataMutex sync.Mutex
+var users map[int64]*User
+var buckets map[string]*Bucket
 
 var mariadb *gorm.DB
 
@@ -88,8 +90,12 @@ func initData() {
 		})
 		fmt.Printf("system user\nuser: system\nauth: %s\n", auth)
 	}
+	dataMutex.Lock()
+	users = make(map[int64]*User)
 	writeMem([]User{})
+	buckets = make(map[string]*Bucket)
 	writeMem([]Bucket{})
+	dataMutex.Unlock()
 }
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
