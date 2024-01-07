@@ -34,7 +34,7 @@ type fileDownload struct {
 type fileCopy struct {
 	SBucket string `json:"s_bucket" form:"s_bucket" binding:"required"`
 	SKey    string `json:"s_key" form:"s_key" binding:"required"`
-	DBucket string
+	DBucket string `json:"d_bucket" form:"d_bucket"`
 	DKey    string `json:"d_key" form:"d_key" binding:"required"`
 }
 
@@ -82,6 +82,7 @@ func (f Filesystem) create(ctx *gin.Context) {
 		mariadb.Create(&cron)
 		CronDelete(&cron)
 	}
+	ctx.Status(http.StatusCreated)
 }
 
 // 文件获取
@@ -120,6 +121,9 @@ func (f Filesystem) move(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errs.Translate(trans))
 		return
 	}
+	if req.DBucket == "" {
+		req.DBucket = req.SBucket
+	}
 	if !checkExistFile(req.SBucket, req.SKey) {
 		ctx.JSON(http.StatusBadRequest, lan[l18n.File_NotFound])
 		return
@@ -138,6 +142,9 @@ func (f Filesystem) copy(ctx *gin.Context) {
 	if errs, ok := ctx.ShouldBind(&req).(validator.ValidationErrors); ok {
 		ctx.JSON(http.StatusBadRequest, errs.Translate(trans))
 		return
+	}
+	if req.DBucket == "" {
+		req.DBucket = req.SBucket
 	}
 	if !checkExistFile(req.SBucket, req.SKey) {
 		ctx.JSON(http.StatusBadRequest, lan[l18n.File_NotFound])
