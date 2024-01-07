@@ -21,6 +21,7 @@ var MODE = ""
 var BASE_DIR = ""
 var DSN = ""
 var LANGUAGE = ""
+var TEMP_DURATION int64 = 3600 * 12
 
 func init() {
 	Init()

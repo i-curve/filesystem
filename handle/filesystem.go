@@ -8,15 +8,17 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 )
 
 type fileUpload struct {
-	Bucket string                `json:"bucket" form:"bucket" binding:"required"`
-	PATH   string                `json:"path" form:"path" binding:"required"`
-	File   *multipart.FileHeader `json:"file" form:"file" binding:"required"`
+	Bucket   string                `json:"bucket" form:"bucket" binding:"required"`
+	PATH     string                `json:"path" form:"path" binding:"required"`
+	File     *multipart.FileHeader `json:"file" form:"file" binding:"required"`
+	Duration int64                 `json:"duration" form:"duration"`
 }
 
 type fileDelete struct {
@@ -68,6 +70,18 @@ func (f Filesystem) create(ctx *gin.Context) {
 	}
 	r, _ := req.File.Open()
 	writeFile(req.Bucket, req.PATH, r)
+	if buckets[req.Bucket].IsTemp {
+		req.Duration = config.TEMP_DURATION
+	}
+	if req.Duration > 0 {
+		var cron = Cron{
+			Bucket:     req.Bucket,
+			Path:       req.PATH,
+			DeleteTime: time.Now().Add(time.Second * time.Duration(req.Duration)),
+		}
+		mariadb.Create(&cron)
+		CronDelete(&cron)
+	}
 }
 
 // 文件获取

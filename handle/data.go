@@ -61,7 +61,7 @@ func initDB() {
 	if err != nil {
 		panic("mysql connect error: " + err.Error())
 	}
-	mariadb.AutoMigrate(&User{}, &Bucket{})
+	mariadb.AutoMigrate(&User{}, &Bucket{}, &Cron{})
 }
 
 func writeMem[T User | Bucket](res []T) (user *User) {
