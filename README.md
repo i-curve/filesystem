@@ -13,10 +13,10 @@
     - [4. admin](#4-admin)
       - [权限刷新](#权限刷新)
   - [Deploy](#deploy)
-    - [1. 构建程序](#1-构建程序)
-    - [2. docker 构建](#2-docker-构建)
-    - [3. docker hub](#3-docker-hub)
-    - [4. 运行 docker](#4-运行-docker)
+    - [构建程序](#构建程序)
+    - [docker 构建](#docker-构建)
+    - [docker hub](#docker-hub)
+    - [运行 docker](#运行-docker)
     - [5. 检测是否部署成功](#5-检测是否部署成功)
 
 <!-- /code_chunk_output -->
@@ -123,9 +123,10 @@ curl -X GET "${URL}/file/download?bucket=bucket1&key=/test/a.txt" \
 - 文件删除
 
 ```bash
-curl -X DELETE "${URL}/file/delete?bucket=bucket1&key=/test/01" \
+curl -X DELETE "${URL}/file/delete" \
 --header "user: ${USER}" \
---header "auth: ${AUTH}"
+--header "auth: ${AUTH}" \
+-d '{"bucket": "bucket", "key": "/test/01"}'
 ```
 
 - 文件移动
@@ -179,7 +180,7 @@ curl "${URL}/version" \
 git clone https://github.com/i-curve/filesystem.git
 ```
 
-### 1. 构建程序
+### 构建程序
 
 生成可执行文件 filesystem
 
@@ -187,7 +188,7 @@ git clone https://github.com/i-curve/filesystem.git
 cd filesystem && make
 ```
 
-### 2. docker 构建
+### docker 构建
 
 构建 docker 镜像
 
@@ -195,7 +196,7 @@ cd filesystem && make
 make docker
 ```
 
-### 3. docker hub
+### docker hub
 
 拉取镜像
 
@@ -203,7 +204,7 @@ make docker
 docker pull wjuncurve/filesystem:latest
 ```
 
-### 4. 运行 docker
+### 运行 docker
 
 ```bash
 docker run --name filesystem -d  \
