@@ -1,4 +1,4 @@
-VERSION=$(shell git describe --tags --always)
+VERSION=$(shell git describe --tags --always | sed 's/^v//')
 
 build:
 	go build -o filesystem -ldflags "-X main.Version=$(VERSION)" main.go 
