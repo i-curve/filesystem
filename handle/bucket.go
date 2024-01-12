@@ -59,9 +59,29 @@ func StaticRoute(r *gin.Engine) {
 func BucketRoute(r *gin.Engine) {
 	bucketRoute := r.Group("/bucket", authJwt)
 	{
+		bucketRoute.GET("", listBucket)
 		bucketRoute.POST("", createBucket)
 		bucketRoute.DELETE("", deleteBucket)
 	}
+}
+
+func listBucket(ctx *gin.Context) {
+	var req pojo.ListBucket
+	if errs, ok := ctx.ShouldBind(&req).(validator.ValidationErrors); ok {
+		ctx.JSON(http.StatusBadRequest, errs.Translate(trans))
+		return
+	}
+	_, user := getAuth(ctx)
+	var buckets []*Bucket
+	t := mariadb.Model(&Bucket{})
+	if user.UType == UTypeUser {
+		t.Where(&Bucket{UId: user.Id})
+	}
+	if name := strings.TrimSpace(req.Name); name != "" {
+		t.Where("name like %?%", name)
+	}
+	t.Find(&buckets)
+	ctx.JSON(http.StatusOK, buckets)
 }
 
 func createBucket(ctx *gin.Context) {
