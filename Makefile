@@ -9,10 +9,14 @@ docker: build
 
 .PHONY: docker-push
 docker-push:
-	docker tag filesystem:$(VERSION) wjuncurve/filesystem
 	docker tag filesystem:$(VERSION) wjuncurve/filesystem:$(VERSION)
-	docker push wjuncurve/filesystem:$(VERSION)
-	docker push wjuncurve/filesystem
+	docker push wjuncurve/filesystem:$(VERSION) && docker image rm filesystem:$(VERSION) wjuncurve/filesystem:$(VERSION)
+	docker tag filesystem:$(VERSION) wjuncurve/filesystem
+	docker push wjuncurve/filesystem && docker image rm wjuncurve/filesystem
+	docker tag filesystem:$(VERSION) ghcr.io/i-curve/filesystem
+	docker tag filesystem:$(VERSION) ghcr.io/i-curve/filesystem:$(VERSION)
+	docker push filesystem:$(VERSION) ghcr.io/i-curve/filesystem:$(VERSION) && docker image rm filesystem:$(VERSION) ghcr.io/i-curve/filesystem:$(VERSION)
+	docker push ghcr.io/i-curve/filesystem && docker image rm ghcr.io/i-curve/filesystem
 
 .PHONY: run-docker
 run-docker: docker
