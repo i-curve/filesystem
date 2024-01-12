@@ -1,0 +1,18 @@
+name: Docker Image CI
+
+on:
+  release:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: sue445/go-mod-tidy-pr@v1.5.2
+    - name: go mod tidy
+      run: go mod tidy
+
+    - uses: APN-Pucky/make-python-action@1.0.0
+    - uses: cloudposse/github-action-docker-build-push@1.14.0
+    - name: build docker
+      run: make docker
