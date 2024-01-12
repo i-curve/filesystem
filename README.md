@@ -12,7 +12,9 @@
     - [3. filesystem](#3-filesystem)
     - [4. admin](#4-admin)
       - [权限刷新](#权限刷新)
-  - [Deploy](#deploy)
+  - [III. sdk](#iii-sdk)
+    - [1. go sdk](#1-go-sdk)
+  - [IV. deploy](#iv-deploy)
     - [构建程序](#构建程序)
     - [docker 构建](#docker-构建)
     - [docker hub](#docker-hub)
@@ -172,7 +174,13 @@ curl "${URL}/version" \
 --header  "auth: ${AUTH}"
 ```
 
-## Deploy
+## III. sdk
+
+### 1. go sdk
+
+repo: [https://github.com/i-curve/filesystem-gosdk](https://github.com/i-curve/filesystem-gosdk)
+
+## IV. deploy
 
 克隆项目
 

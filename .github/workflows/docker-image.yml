@@ -1,18 +1,20 @@
 name: Docker Image CI
 
 on:
+  workflow_dispatch:
   release:
-    branches: [ "main" ]
+    branches: ["master"]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: sue445/go-mod-tidy-pr@v1.5.2
-    - name: go mod tidy
-      run: go mod tidy
+      - uses: actions/checkout@v3
+      - name: install go
+        run: |
+          sudo add-apt-repository ppa:longsleep/golang-backports
+          sudo apt update
+          sudo apt install golang-go
 
-    - uses: APN-Pucky/make-python-action@1.0.0
-    - uses: cloudposse/github-action-docker-build-push@1.14.0
-    - name: build docker
-      run: make docker
+      - name: build docker
+        run: make docker
