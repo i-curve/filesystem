@@ -5,7 +5,37 @@ import (
 	"io"
 	"os"
 	"path"
+	"sort"
 )
+
+type Dirs struct {
+	Path     string `json:"path"`
+	Filename string `json:"filename"`
+	IsDir    bool   `json:"is_dir"`
+}
+
+func listDir(dirs string) ([]*Dirs, error) {
+	var data []*Dirs
+	entries, err := os.ReadDir(path.Join(config.BASE_DIR, dirs))
+	if err != nil {
+		return nil, err
+	}
+	for _, entry := range entries {
+		data = append(data, &Dirs{
+			Path:     dirs,
+			Filename: entry.Name(),
+			IsDir:    entry.IsDir(),
+		})
+	}
+
+	sort.Slice(data, func(i, j int) bool {
+		if data[i].IsDir == data[j].IsDir {
+			return data[i].Filename < data[j].Filename
+		}
+		return data[i].IsDir
+	})
+	return data, nil
+}
 
 func checkExistFile(bucket string, key string) bool {
 	_, err := os.Stat(path.Join(config.BASE_DIR, bucket, key))

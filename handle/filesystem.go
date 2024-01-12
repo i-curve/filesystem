@@ -8,11 +8,16 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 )
+
+type listdir struct {
+	Path string `json:"path" form:"path" binding:"required"`
+}
 
 type fileUpload struct {
 	Bucket   string                `json:"bucket" form:"bucket" binding:"required"`
@@ -42,6 +47,7 @@ func FileRoute(r *gin.Engine) {
 	fileRoute := r.Group("file", authJwt)
 	{
 		contact := Filesystem{}
+		fileRoute.GET("/catalog", contact.listdir)
 		fileRoute.POST("/upload", contact.create)    // 文件上传
 		fileRoute.GET("/download", contact.download) // 文件下载
 		fileRoute.POST("/copy", contact.copy)        // 文件复制
@@ -51,6 +57,34 @@ func FileRoute(r *gin.Engine) {
 }
 
 type Filesystem struct{}
+
+func (f Filesystem) listdir(ctx *gin.Context) {
+	var req listdir
+	if errs, ok := ctx.ShouldBind(&req).(validator.ValidationErrors); ok {
+		ctx.JSON(http.StatusBadRequest, errs.Translate(trans))
+		return
+	}
+	req.Path = strings.TrimPrefix(strings.TrimSpace(req.Path), "/")
+	fields := strings.Split(req.Path, "/")
+	if len(fields) == 0 {
+		ctx.JSON(http.StatusBadRequest, lan[l18n.ParamError])
+		return
+	}
+	bucket := fields[0]
+	if !checkExistBucket(bucket) {
+		ctx.JSON(http.StatusForbidden, lan[l18n.BUCKET_NotFound])
+		return
+	}
+	if authBucketNo(ctx, bucket) {
+		ctx.JSON(http.StatusForbidden, lan[l18n.ForbiddenOperate])
+		return
+	}
+	if data, err := listDir(req.Path); err != nil {
+		ctx.JSON(http.StatusInternalServerError, lan[l18n.Path_ReadFail])
+	} else {
+		ctx.JSON(http.StatusOK, data)
+	}
+}
 
 // 文件上传
 func (f Filesystem) create(ctx *gin.Context) {
