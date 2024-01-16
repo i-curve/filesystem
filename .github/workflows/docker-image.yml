@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   release:
     branches: ["master"]
+    type: [published]
 
 jobs:
   build:
