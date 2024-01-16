@@ -8,7 +8,7 @@ import (
 )
 
 // go build -ldflags "-X main.Version=x.y.z"
-// 2.3.2
+// 2.3.3
 var Version = ""
 
 // ApiServer api接口
