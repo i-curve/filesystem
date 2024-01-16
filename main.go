@@ -11,16 +11,10 @@ import (
 // 2.0.0
 var Version = ""
 
-func getVersion(ctx *gin.Context) {
-	ctx.String(200, "%s", Version)
-}
-
 // ApiServer api接口
 func ApiServer() *gin.Engine {
 	r := gin.Default()
-	r.GET("/version", getVersion)
-	handle.AdminRotue(r)
-
+	handle.AdminRotue(r, Version)
 	handle.UserRoute(r)
 	handle.BucketRoute(r)
 	handle.FileRoute(r)
