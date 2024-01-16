@@ -1,6 +1,9 @@
 # filesystem
 
-![GitHub Release](https://img.shields.io/github/v/release/i-curve/filesystem)[![Docker Image CI](https://github.com/i-curve/filesystem/actions/workflows/docker-image.yml/badge.svg)](https://github.com/i-curve/filesystem/actions/workflows/docker-image.yml)![GitHub Tag](https://img.shields.io/github/v/tag/i-curve/filesystem-gosdk?label=filesystem-gosdk)![GitHub Tag](https://img.shields.io/github/v/tag/i-curve/filesystem-pysdk?label=filesystem-pysdk)
+[![Docker Image CI](https://github.com/i-curve/filesystem/actions/workflows/docker-image.yml/badge.svg)](https://github.com/i-curve/filesystem/actions/workflows/docker-image.yml)
+[![GitHub Release](https://img.shields.io/github/v/release/i-curve/filesystem)](https://github.com/i-curve/filesystem/releases)
+[![GitHub Tag](https://img.shields.io/github/v/tag/i-curve/filesystem-gosdk?label=filesystem-gosdk)](https://github.com/i-curve/filesystem-gosdk)
+[![GitHub Tag](https://img.shields.io/github/v/tag/i-curve/filesystem-pysdk?label=filesystem-pysdk)](https://github.com/i-curve/filesystem-pysdk)
 
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
 
