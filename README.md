@@ -4,6 +4,7 @@
 [![GitHub Release](https://img.shields.io/github/v/release/i-curve/filesystem)](https://github.com/i-curve/filesystem/releases)
 [![GitHub Tag](https://img.shields.io/github/v/tag/i-curve/filesystem-gosdk?label=filesystem-gosdk)](https://github.com/i-curve/filesystem-gosdk)
 [![GitHub Tag](https://img.shields.io/github/v/tag/i-curve/filesystem-pysdk?label=filesystem-pysdk)](https://github.com/i-curve/filesystem-pysdk)
+[![GitHub Tag](https://img.shields.io/github/v/tag/i-curve/filesystem-shell?label=filesystem-shell)](https://github.com/i-curve/filesystem-shell)
 
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
 
@@ -19,6 +20,8 @@
       - [权限刷新](#权限刷新)
   - [III. sdk](#iii-sdk)
     - [1. go sdk](#1-go-sdk)
+    - [2. python sdk](#2-python-sdk)
+    - [3. shell](#3-shell)
   - [IV. deploy](#iv-deploy)
     - [构建程序](#构建程序)
     - [docker 构建](#docker-构建)
@@ -104,7 +107,24 @@ curl -X DELETE "${URL}/bucket" \
 --data-raw '{"name": "bucket2"}'
 ```
 
+- 获取所有 bucket
+
+```shell
+curl -X GET "${URL}/bucket" \
+--header "user: ${USER}" \
+--header "auth: ${AUTH}" \
+--header 'Content-Type: application/json'
+```
+
 ### 3. filesystem
+
+- 获取文件目录
+
+```shell
+curl -X GET "${URL}/file/catalog?path={path}" \
+--header "user: ${USER}" \
+--header "auth: ${AUTH}"
+```
 
 - 文件上传
 
@@ -184,6 +204,14 @@ curl "${URL}/version" \
 ### 1. go sdk
 
 repo: [https://github.com/i-curve/filesystem-gosdk](https://github.com/i-curve/filesystem-gosdk)
+
+### 2. python sdk
+
+repo: [https://github.com/i-curve/filesystem-pysdk](https://github.com/i-curve/filesystem-pysdk)
+
+### 3. shell
+
+repo: [https://github.com/i-curve/filesystem-shell](https://github.com/i-curve/filesystem-shell)
 
 ## IV. deploy
 
